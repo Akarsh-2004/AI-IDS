@@ -1,0 +1,69 @@
+✅ Objective
+Detect malicious patterns in OS syscalls using a trained ML model. Check every 300 syscalls in batches and log any malicious activity to logs/alerts.log.
+
+🧠 How It Works
+Source of Logs:
+The system monitors /var/log/audit/audit.log in real-time using tail -f behavior.
+
+Syscall Extraction:
+
+Extracts syscall_id and pid using regex from lines containing type=SYSCALL.
+
+Collects 300 such entries into a batch.
+
+Batch Prediction:
+
+Each batch of (syscall_id, pid) is vectorized using tfidf_vectorizer.pkl.
+
+The vector is passed to random_forest_ids.pkl for prediction.
+
+Alert Generation:
+
+If any prediction in the batch is 1 (malicious), it logs a warning to logs/alerts.log.
+
+Log format:
+
+text
+Copy code
+Alert: {'label': 'Malicious', 'syscall_id': ..., 'pid': ..., 'line': ...}
+📁 Project Structure
+Located in: ~/Desktop/os_project
+
+Contains:
+
+pgsql
+Copy code
+APIf.py
+logs/                  ← Logs directory (created automatically if missing)
+models/                ← Trained models stored here
+monitor_syscalls.py    ← This is the IDS script
+realtime_ids.py        ← Possibly older version
+🔁 Running the IDS
+Run using:
+
+bash
+Copy code
+python3 monitor_syscalls.py
+🛠️ Checking if It’s Working
+Monitor alerts:
+
+bash
+Copy code
+tail -f logs/alerts.log
+Simulate syscalls for testing: Inject fake entries into audit log:
+
+bash
+Copy code
+for i in {1..300}; do
+  echo "type=SYSCALL msg=audit(1713712$i.000:$i): arch=c000003e syscall=59 success=yes exit=0 a0=1234 pid=$((1000 + $i)) comm=\"simulator\"" | sudo tee -a /var/log/audit/audit.log
+done
+⚠️ Important Notes
+Make sure auditd is running.
+
+The model and vectorizer must exist at:
+
+bash
+Copy code
+models/random_forest_ids.pkl
+models/tfidf_vectorizer.pkl
+The script auto-deletes any previous alerts.log before each run.
