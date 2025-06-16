@@ -1,0 +1,53 @@
+# Real-Time Intrusion Detection System (IDS)
+
+An AI-powered real-time IDS that detects anomalous system call behavior using machine learning and live syscall monitoring via `auditd`. The system identifies potential threats by analyzing syscall patterns and provides risk-based alerts with confidence scoring.
+
+---
+
+## 🚀 Features
+
+- ✅ **Real-time syscall monitoring** using `ausearch`
+- ✅ **TF-IDF + Random Forest model** for anomaly detection
+- ✅ **Risk scoring** (LOW / MEDIUM / HIGH)
+- ✅ **Alert suppression and whitelisting**
+- ✅ **WebSocket-based alert push (optional)**
+- ✅ **Multithreaded performance**
+- ✅ **Live stats & logging with `loguru`**
+- ✅ **Modular & extensible**
+
+---
+
+## 🧠 Model
+
+- Trained on **ADFA-LD syscall dataset**
+- Balanced benign/malicious examples
+- Feature extraction using **TF-IDF**
+- Classifier: **RandomForest**
+- Saved via `joblib`
+
+---
+
+## 📊 Detection Stats (Sample Run)
+
+- **Lines processed**: 147,341  
+- **Syscalls parsed**: 37,519  
+- **Malicious detected**: 37,500  
+- **Detection rate**: 100%  
+- **Avg. confidence**: 0.614  
+- **High-risk alerts**: 0  
+- **Suppressed alerts**: 89%  
+
+---
+
+## 🛠 Requirements
+
+See [`requirements.txt`](./requirements.txt) for full list.
+
+Minimum:
+```bash
+scikit-learn
+pandas
+numpy
+loguru
+joblib
+websockets (optional)

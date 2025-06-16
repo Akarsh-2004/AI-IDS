@@ -1,0 +1,35 @@
+# Problems Faced During Real-Time IDS Development
+
+## 1. **Syscall Parsing in Real-Time**
+- **Issue**: Extracting live syscalls from `ausearch` was inconsistent due to buffering and varying audit log formats.
+- **Fix**: Used subprocess with appropriate `ausearch` filters and implemented a line-buffered parser with regex matching.
+
+## 2. **Data Labeling for Model Training**
+- **Issue**: ADFA-LD dataset lacked precise labels for supervised training.
+- **Fix**: Mapped malicious sessions based on file structure and balanced the dataset using downsampling of benign data.
+
+## 3. **Model Performance and Overfitting**
+- **Issue**: Initial model had high accuracy but poor generalization to live data.
+- **Fix**: Re-tuned the RandomForest classifier with better cross-validation and improved TF-IDF preprocessing with `min_df` and `max_df`.
+
+## 4. **Real-Time Prediction Bottleneck**
+- **Issue**: Prediction was slow due to batch size and blocking I/O.
+- **Fix**: Implemented threading + batch prediction using joblib-serialized model and efficient vectorization.
+
+## 5. **False Positives / Alert Flooding**
+- **Issue**: Model was raising too many low-confidence alerts.
+- **Fix**: Added risk scoring + confidence filtering thresholds. Introduced suppression and whitelisting logic.
+
+## 6. **WebSocket Push and UI Sync**
+- **Issue**: WebSocket server wasn't pushing alerts reliably.
+- **Fix**: Ensured async-safe WebSocket handling and alert queueing for real-time stream updates.
+
+## 7. **Log Management**
+- **Issue**: Logging became verbose and unstructured.
+- **Fix**: Integrated `loguru` for timestamped, colorized, and categorized logs.
+
+---
+
+**Bonus Problems**
+- Live syscall behavior was OS-specific (tuning required for different Linux distros).
+- Audit daemon needed elevated permissions and persistent logging configuration.
