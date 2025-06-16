@@ -2,37 +2,22 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://192.168.107.192:8000"; // Fallback for development
 
 function Navbar({ currentView, setView }) {
-  const navStyle = {
-    display: 'flex',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    padding: '10px',
-    color: 'white',
-    fontWeight: 'bold',
-    position: 'sticky',
-    top: 0,
-    zIndex: 1000
-  };
-
+  const navStyle = { display: 'flex', justifyContent: 'space-around', padding: '10px', background: '#222', color: '#fff' };
   const buttonStyle = (view) => ({
     backgroundColor: currentView === view ? '#555' : '#333',
-    border: 'none',
-    padding: '10px 15px',
-    borderRadius: '5px',
-    cursor: 'pointer',
-    color: 'white'
+    border: 'none', padding: '10px 15px', borderRadius: '5px', cursor: 'pointer', color: 'white'
   });
 
   return (
     <nav style={navStyle}>
-      <button style={buttonStyle('dashboard')} onClick={() => setView('dashboard')}>Dashboard</button>
-      <button style={buttonStyle('logs')} onClick={() => setView('logs')}>Live Logs</button>
-      <button style={buttonStyle('start')} onClick={() => setView('start')}>Start Monitoring</button>
-      <button style={buttonStyle('stop')} onClick={() => setView('stop')}>Stop Monitoring</button>
-      <button style={buttonStyle('info')} onClick={() => setView('info')}>System Info</button>
+      {["dashboard", "logs", "start", "stop", "info"].map((view) => (
+        <button key={view} style={buttonStyle(view)} onClick={() => setView(view)}>
+          {view.charAt(0).toUpperCase() + view.slice(1)}
+        </button>
+      ))}
     </nav>
   );
 }
@@ -43,8 +28,12 @@ function LiveLogs() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/logs`);
-        setLogs(response.data.logs || []);
+        const response = await axios.get(`${API_BASE_URL}/alerts/latest`);
+        const rawLogs = response.data.alerts || [];
+        const formatted = rawLogs.map(a =>
+          `[${a.timestamp}] ${a.severity.toUpperCase()} - ${a.details?.process_name} (confidence: ${(a.confidence * 100).toFixed(1)}%)`
+        );
+        setLogs(formatted);
       } catch (error) {
         console.error('Error fetching logs:', error);
       }
@@ -60,43 +49,45 @@ function LiveLogs() {
       <h2>Live Logs</h2>
       <div style={{ maxHeight: '300px', overflowY: 'scroll', background: '#111', padding: '10px' }}>
         {logs.length ? logs.map((log, idx) => (
-          <p key={idx} style={{ color: '#0f0' }}>{log}</p>
-        )) : <p>No logs found.</p>}
+          <p key={idx} style={{ color: '#0f0', margin: 0 }}>{log}</p>
+        )) : <p style={{ color: 'gray' }}>No alerts yet.</p>}
       </div>
     </div>
   );
 }
 
 function Dashboard() {
-  const [warnings, setWarnings] = useState(0);
-  const [isWarning, setIsWarning] = useState(false);
-  const [linux, setLinux] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    const fetchStatus = async () => {
+    const fetchStats = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/status`);
-        setWarnings(response.data.warnings);
-        setIsWarning(response.data.is_warning);
-        setLinux(response.data.linux);
+        const response = await axios.get(`${API_BASE_URL}/stats`);
+        setStats(response.data);
       } catch (error) {
-        console.error('Error fetching status:', error);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching stats:', error);
       }
     };
-    fetchStatus();
+
+    fetchStats();
+    const interval = setInterval(fetchStats, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <div style={{ padding: '20px' }}>
       <h2>System Status</h2>
-      {loading ? <p>Loading status...</p> : (
+      {stats ? (
         <>
-          {isWarning && <p style={{ color: 'orange' }}>⚠️ {warnings} warnings detected</p>}
-          {linux && <p style={{ color: 'lightgreen' }}>✅ Linux system detected</p>}
+          <p><strong>Running:</strong> {stats.total_syscalls > 0 ? '✅' : '⏹️'}</p>
+          <p><strong>Syscalls Parsed:</strong> {stats.total_syscalls}</p>
+          <p><strong>Alerts Generated:</strong> {stats.alerts_generated}</p>
+          <p><strong>Lines Processed:</strong> {stats.lines_processed}</p>
+          <p><strong>Detection Rate:</strong> {(stats.detection_rate * 100).toFixed(1)}%</p>
+          <p><strong>Uptime:</strong> {stats.uptime}</p>
         </>
+      ) : (
+        <p>Loading stats...</p>
       )}
     </div>
   );
@@ -105,26 +96,25 @@ function Dashboard() {
 function ControlPanel({ action }) {
   const handleAction = async () => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/${action}`);
-      alert(response.data.message || `${action} action sent.`);
+      const response = await axios.post(`${API_BASE_URL}/control/${action}`);
+      alert(response.data.message || `${action} command sent.`);
     } catch (error) {
-      alert('Error performing action.');
-      console.error(error);
+      alert(`Error: ${error.response?.data?.detail || error.message}`);
     }
   };
 
   return (
     <div style={{ padding: '20px' }}>
       <h2>{action === 'start' ? 'Start' : 'Stop'} Monitoring</h2>
-      <button onClick={handleAction} style={{
-        padding: '10px 20px',
-        backgroundColor: action === 'start' ? 'green' : 'red',
-        color: 'white',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer'
-      }}>
-        {action === 'start' ? 'Start' : 'Stop'} Monitoring
+      <button
+        onClick={handleAction}
+        style={{
+          padding: '10px 20px',
+          backgroundColor: action === 'start' ? 'green' : 'red',
+          color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer'
+        }}
+      >
+        {action === 'start' ? '▶️ Start' : '⏹️ Stop'}
       </button>
     </div>
   );
@@ -136,7 +126,7 @@ function SystemInfo() {
   useEffect(() => {
     const fetchInfo = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/system`);
+        const response = await axios.get(`${API_BASE_URL}/model/info`);
         setInfo(response.data);
       } catch (error) {
         console.error('Error fetching system info:', error);
@@ -147,10 +137,14 @@ function SystemInfo() {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>System Info</h2>
+      <h2>Model Info</h2>
       {info ? (
-        <pre style={{ background: '#111', padding: '10px', color: 'lightblue' }}>{JSON.stringify(info, null, 2)}</pre>
-      ) : <p>Loading system info...</p>}
+        <pre style={{ background: '#111', padding: '10px', color: 'lightblue' }}>
+          {JSON.stringify(info, null, 2)}
+        </pre>
+      ) : (
+        <p>Loading model info...</p>
+      )}
     </div>
   );
 }
@@ -158,26 +152,21 @@ function SystemInfo() {
 function App() {
   const [currentView, setView] = useState('dashboard');
 
-  const renderView = () => {
-    switch (currentView) {
-      case 'dashboard': return <Dashboard />;
-      case 'logs': return <LiveLogs />;
-      case 'start': return <ControlPanel action="start" />;
-      case 'stop': return <ControlPanel action="stop" />;
-      case 'info': return <SystemInfo />;
-      default: return <Dashboard />;
-    }
-  };
-
   return (
     <div>
-      <header style={{  color: 'white', padding: '20px', textAlign: 'center' }}>
-        <h1>Real-Time Intrusion Detection System</h1>
-        <p>Monitoring Linux syscalls for suspicious behavior</p>
+      <header style={{ color: 'white', padding: '20px', textAlign: 'center', background: '#000' }}>
+        <h1>🛡️ AI-Powered IDS</h1>
+        <p>Real-time syscall anomaly detection</p>
       </header>
       <Navbar currentView={currentView} setView={setView} />
       <main style={{ background: '#000', minHeight: '100vh', color: 'white' }}>
-        {renderView()}
+        {{
+          dashboard: <Dashboard />,
+          logs: <LiveLogs />,
+          start: <ControlPanel action="start" />,
+          stop: <ControlPanel action="stop" />,
+          info: <SystemInfo />
+        }[currentView] || <Dashboard />}
       </main>
     </div>
   );
