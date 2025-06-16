@@ -5,6 +5,24 @@
 > 💡 **Want a plug-and-play version?**  
 > Run [`backend/monitor_syscalls.py`](backend/monitor_syscalls.py) after installing dependencies — you're good to go!
 
+
+
+![Screenshot 2025-06-16 085239](https://github.com/user-attachments/assets/84a076c2-b218-4e88-90f2-cf7e7c42fc04)
+
+
+![Screenshot 2025-06-15 233408](https://github.com/user-attachments/assets/32f1e889-9aab-4e5a-ac48-a939e2a998b1)
+
+
+![Screenshot 2025-06-16 092050](https://github.com/user-attachments/assets/814276c7-26bb-4160-a1ae-2b96acc3ca9a)
+
+
+![Screenshot 2025-06-16 092106](https://github.com/user-attachments/assets/f5f63179-b55b-4fa1-beb9-7a35805fb045)
+
+![Screenshot 2025-06-16 092136](https://github.com/user-attachments/assets/c01b1c7b-3fec-468a-b49e-aa1eb18966f4)
+
+
+
+
 ## 🏗️ Project Structure
 
 AI-IDS/
@@ -155,15 +173,6 @@ AKARSH SAKLANI
 For issues, suggestions, or questions, open an issue on GitHub or contact:
 📧 akarshsaklani222@gmail.com
 
-
-
-![Screenshot 2025-06-16 092136](https://github.com/user-attachments/assets/32651674-071d-4219-8d72-05a56b9a9c1c)
-
-![Screenshot 2025-06-16 092106](https://github.com/user-attachments/assets/b97dcfc5-671a-49ed-aa4f-f09b37b6d2a2)
-
-
-![Screenshot 2025-06-16 092050](https://github.com/user-attachments/assets/33264de3-fa53-4694-a10e-34fb0140876c)
-![Screenshot 2025-06-15 233408](https://github.com/user-attachments/assets/6b1a0fd0-2760-400a-937c-5fe54e2d4ff2)
 
 
 
