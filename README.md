@@ -9,8 +9,6 @@
 
 SCREENSHOTS:
 
-
-
 ![Screenshot 2025-06-16 085239](https://github.com/user-attachments/assets/84a076c2-b218-4e88-90f2-cf7e7c42fc04)
 
 
